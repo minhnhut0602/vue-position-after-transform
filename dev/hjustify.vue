@@ -26,8 +26,8 @@
     patc.rotatepos Test
     patc.rotatepos Testlong
     patc.rotatepos Testlonglong
-  p width: 200px; height: 100px; padding: 10px, halign="justify", origin="right"
-  pat(halign="justify" origin="left" style="width: 200px;height: 100px; padding: 10px")
+  p width: 200px; height: 100px; padding: 10px, halign="justify", valign="center"
+  pat(halign="justify" valign="center" style="width: 200px;height: 100px; padding: 10px")
     patc.rotateneg Testlonglong
     patc.rotateneg Testlong
     patc.rotateneg Test

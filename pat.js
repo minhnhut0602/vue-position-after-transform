@@ -154,11 +154,14 @@ module.exports = {
             }
             return results;
           } else if (_this.halign === "center") {
-            position = container.left + container.width / 2 - totalWidth / 2 + getRelativePosition(children[children.length - 1], "center");
+            position = container.left + container.width / 2 - totalWidth / 2;
+            if (_this.origin !== "center") {
+              position += getRelativePosition(children[children.length - 1], "center");
+            }
             results1 = [];
             for (i = p = 0, len6 = children.length; p < len6; i = ++p) {
               child = children[i];
-              if (i === 0) {
+              if (i === 0 && _this.origin !== "center") {
                 child.set("left", position - child.dim.left + getOffset(child) + 'px');
                 if (_this.origin === "right") {
                   results1.push(offset -= getRelativePosition(child, "right"));
@@ -178,7 +181,7 @@ module.exports = {
                 child.set("left", container.left - child.dim.left + getOffset(child) + 'px');
                 if (_this.origin === "right") {
                   results2.push(offset -= getRelativePosition(child, "center"));
-                } else if (_this.origin === "left") {
+                } else if (_this.origin === "left" || _this.origin === "center") {
                   results2.push(offset += getRelativePosition(children[children.length - 1], "center"));
                 } else {
                   results2.push(void 0);

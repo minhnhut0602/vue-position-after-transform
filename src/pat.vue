@@ -119,9 +119,11 @@ module.exports =
           for child in children
             child.set "right", child.dim.right - container.right + getOffset(child) + 'px'
         else if @halign == "center"
-          position = container.left + container.width / 2 - totalWidth / 2 + getRelativePosition(children[children.length-1], "center")
+          position = container.left + container.width / 2 - totalWidth / 2
+          if @origin != "center"
+            position += getRelativePosition(children[children.length-1], "center")
           for child,i in children
-            if i == 0
+            if i == 0 and @origin != "center"
               child.set "left", position - child.dim.left + getOffset(child) + 'px'
               if @origin == "right"
                 offset -= getRelativePosition(child, "right")
@@ -133,7 +135,7 @@ module.exports =
               child.set "left", container.left - child.dim.left + getOffset(child) + 'px'
               if @origin == "right"
                 offset -= getRelativePosition(child, "center")
-              else if @origin == "left"
+              else if @origin == "left" or @origin == "center"
                 offset += getRelativePosition(children[children.length-1], "center")
             else if i == children.length-1
               child.set "right", child.dim.right - container.right + 'px'
