@@ -54,7 +54,7 @@
     "template-html-loader": "0.0.3",
     "vue": "^1.0.17",
     "vue-compiler": "^0.1.0",
-    "vue-dev-server": "^0.2.4",
+    "vue-dev-server": "^0.2.10",
     "vue-hot-reload-api": "^1.2.2",
     "vue-html-loader": "^1.2.0",
     "vue-loader": "^8.1.1",
