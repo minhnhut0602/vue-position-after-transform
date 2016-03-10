@@ -53,7 +53,7 @@ module.exports =
             child.$set("style.left","0")
             child.$set("style.right",null)
           lastChild = child
-      if @halign == "justify"
+      if lastChild? and @halign == "justify"
         lastChild.$set("style.right","0")
         lastChild.$set("style.left",null)
       @$nextTick =>
@@ -106,10 +106,10 @@ module.exports =
             return child.dim.width
           else
             return parseInt(@childwidth)
-        getRelativePosition = (child) =>
-          if @origin == "left"
+        getRelativePosition = (child, origin=@origin) =>
+          if origin == "left"
             return 0
-          else if @origin == "right"
+          else if origin == "right"
             return getWidth(child) - child.dim.width
           else
             return (getWidth(child) - child.dim.width)/2
@@ -119,11 +119,21 @@ module.exports =
         else if @halign == "center"
           position = container.left + container.width / 2 - totalWidth / 2
           for child,i in children
-            child.set "left", position - child.dim.left + getOffset(child) + getRelativePosition(child) + 'px'
+            if i == 0
+              offset = getRelativePosition(child, "center")
+              child.set "left", position - child.dim.left + getOffset(child) + 'px'
+              if @origin == "right"
+                offset -= getRelativePosition(child, "right")
+            else
+              child.set "left", position - child.dim.left + getOffset(child) + getRelativePosition(child) + 'px'
         else if @halign == "justify"
           for child,i in children
             if i == 0
               child.set "left", container.left - child.dim.left + getOffset(child) + 'px'
+              if @origin == "right"
+                offset -= getRelativePosition(child, "center")
+              else if @origin == "left"
+                offset += getRelativePosition(child, "center")
             else if i == children.length-1
               child.set "right", child.dim.right - container.right + 'px'
             else
