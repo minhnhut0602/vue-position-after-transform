@@ -105,7 +105,7 @@ module.exports =
           else if @childwidth == "actual"
             return child.dim.width
           else
-            return @childwidth
+            return parseInt(@childwidth)
         getRelativePosition = (child) =>
           if @origin == "left"
             return 0

@@ -128,7 +128,7 @@ module.exports = {
             } else if (_this.childwidth === "actual") {
               return child.dim.width;
             } else {
-              return _this.childwidth;
+              return parseInt(_this.childwidth);
             }
           };
           getRelativePosition = function(child) {

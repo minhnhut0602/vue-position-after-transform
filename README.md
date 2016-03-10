@@ -38,6 +38,8 @@ see `dev/` folder for examples
 | update | Boolean | false | will update on element resize |
 | valign | String | "top" | available: "top", "center", "bottom" |
 | halign | String | "left" | available: "left", "center","justify", "right" |
+| childwidth | String | "mean" | available: "mean", "actual" or an absolute number; width which is taken to position the children. |
+| origin | String | "center" | available: "left", "center", "right"; used in halign: "center" and "justify" to position child relative to given childwidth |
 
 # Development
 Clone repository
