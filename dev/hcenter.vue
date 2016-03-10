@@ -16,6 +16,16 @@
     patc.rotateneg Test
     patc.rotateneg Testlonglong
     patc.rotateneg Test
+  p width: 200px; height: 100px; padding: 10px, halign="center", origin="left"
+  pat(halign="center" origin="left" style="width: 200px;height: 100px; padding: 10px")
+    patc.rotatepos Testlonglong
+    patc.rotatepos Test
+    patc.rotatepos Testlonglong
+  p width: 200px; height: 100px; padding: 10px, halign="center", origin="left"
+  pat(halign="center" origin="left" style="width: 200px;height: 100px; padding: 10px")
+    patc.rotatepos Test
+    patc.rotatepos Testlong
+    patc.rotatepos Testlonglong
 </template>
 
 <script lang="coffee">

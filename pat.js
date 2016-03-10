@@ -109,6 +109,9 @@ module.exports = {
           if (children.length === 1 && _this.halign === "justify") {
             _this.halign = "center";
           }
+          if (totalWidth > container.width) {
+            totalWidth = container.width;
+          }
           meanWidth = totalWidth / children.length;
           offset = 0;
           space = 0;
@@ -151,12 +154,11 @@ module.exports = {
             }
             return results;
           } else if (_this.halign === "center") {
-            position = container.left + container.width / 2 - totalWidth / 2;
+            position = container.left + container.width / 2 - totalWidth / 2 + getRelativePosition(children[children.length - 1], "center");
             results1 = [];
             for (i = p = 0, len6 = children.length; p < len6; i = ++p) {
               child = children[i];
               if (i === 0) {
-                offset = getRelativePosition(child, "center");
                 child.set("left", position - child.dim.left + getOffset(child) + 'px');
                 if (_this.origin === "right") {
                   results1.push(offset -= getRelativePosition(child, "right"));
@@ -177,7 +179,7 @@ module.exports = {
                 if (_this.origin === "right") {
                   results2.push(offset -= getRelativePosition(child, "center"));
                 } else if (_this.origin === "left") {
-                  results2.push(offset += getRelativePosition(child, "center"));
+                  results2.push(offset += getRelativePosition(children[children.length - 1], "center"));
                 } else {
                   results2.push(void 0);
                 }

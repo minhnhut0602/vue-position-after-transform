@@ -89,6 +89,8 @@ module.exports =
         ## horizontal align
         if children.length == 1 && @halign == "justify"
           @halign = "center"
+        if totalWidth > container.width
+          totalWidth = container.width
         meanWidth = totalWidth / children.length
         offset = 0
         space = 0
@@ -117,10 +119,9 @@ module.exports =
           for child in children
             child.set "right", child.dim.right - container.right + getOffset(child) + 'px'
         else if @halign == "center"
-          position = container.left + container.width / 2 - totalWidth / 2
+          position = container.left + container.width / 2 - totalWidth / 2 + getRelativePosition(children[children.length-1], "center")
           for child,i in children
             if i == 0
-              offset = getRelativePosition(child, "center")
               child.set "left", position - child.dim.left + getOffset(child) + 'px'
               if @origin == "right"
                 offset -= getRelativePosition(child, "right")
@@ -133,7 +134,7 @@ module.exports =
               if @origin == "right"
                 offset -= getRelativePosition(child, "center")
               else if @origin == "left"
-                offset += getRelativePosition(child, "center")
+                offset += getRelativePosition(children[children.length-1], "center")
             else if i == children.length-1
               child.set "right", child.dim.right - container.right + 'px'
             else
