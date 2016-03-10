@@ -53,7 +53,7 @@ module.exports =
   border 1px dotted black
 .rotate
   transform rotate(-45deg)
-
+  //transform-origin top left
 .container > a
   position absolute
   line-height 350px

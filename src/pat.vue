@@ -22,6 +22,12 @@ module.exports =
     "update":
       type: Boolean
       default: false
+    "childwidth":
+      type: String
+      default: "mean"
+    "origin":
+      type: String
+      default: "center"
 
   data: ->
     style:
@@ -31,14 +37,25 @@ module.exports =
 
   methods:
     doUpdate: ->
-      if @valign == "bottom"
-        for child in @$children
-          if child.isPatc
+      lastChild = null
+      for child in @$children
+        if child.isPatc
+          if @valign == "bottom"
             child.$set("style.bottom","0")
-      if @halign == "right"
-        for child in @$children
-          if child.isPatc
+            child.$set("style.top",null)
+          else
+            child.$set("style.top","0")
+            child.$set("style.bottom",null)
+          if @halign == "right"
             child.$set("style.right","0")
+            child.$set("style.left",null)
+          else
+            child.$set("style.left","0")
+            child.$set("style.right",null)
+          lastChild = child
+      if @halign == "justify"
+        lastChild.$set("style.right","0")
+        lastChild.$set("style.left",null)
       @$nextTick =>
         return unless @$el
         container = @$els.con.getBoundingClientRect()
@@ -55,8 +72,8 @@ module.exports =
                 child.$set("style.#{path}", value)
         for child in @$children
           processChild(child)
-        if children.length == 1 && @halign == "justify"
-          @halign = "center"
+        ## vertical align
+
         if @valign == "top"
           for child in children
             child.set "top", container.top - child.dim.top+ 'px'
@@ -68,30 +85,52 @@ module.exports =
         else
           for child in children
             child.set "bottom", child.dim.bottom - container.bottom + 'px'
-        width = 0
+
+        ## horizontal align
+        if children.length == 1 && @halign == "justify"
+          @halign = "center"
+        meanWidth = totalWidth / children.length
+        offset = 0
+        space = 0
+        if @halign == "justify"
+          space = (container.width - totalWidth) / (children.length - 1)
+        getOffset = (child) =>
+          tmp = offset
+          offset += getWidth(child)
+          offset += space
+          return tmp
+        getWidth = (child) =>
+          if @childwidth == "mean"
+            return meanWidth
+          else if @childwidth == "actual"
+            return child.dim.width
+          else
+            return @childwidth
+        getRelativePosition = (child) =>
+          if @origin == "left"
+            return 0
+          else if @origin == "right"
+            return getWidth(child) - child.dim.width
+          else
+            return (getWidth(child) - child.dim.width)/2
         if @halign == "right"
           for child in children
-            child.set "right", child.dim.right - container.right + width + 'px'
-            width += child.dim.width
+            child.set "right", child.dim.right - container.right + getOffset(child) + 'px'
         else if @halign == "center"
-          position = (container.right - container.left) / 2 + container.left
-          for child in children
-            childPosition = (child.dim.right - child.dim.left) / 2 + child.dim.left
-            widthCorrection = (totalWidth - child.dim.width)/2
-            child.set "left", position - childPosition + width - widthCorrection + 'px'
-            width += child.dim.width
-        else if @halign == "justify"
-          space = (container.width - totalWidth) / (children.length - 1)
+          position = container.left + container.width / 2 - totalWidth / 2
           for child,i in children
-            left = container.left - child.dim.left + width
-            if i > 0
-              left += space
-            child.set "left", left + 'px'
-            width += child.dim.width
+            child.set "left", position - child.dim.left + getOffset(child) + getRelativePosition(child) + 'px'
+        else if @halign == "justify"
+          for child,i in children
+            if i == 0
+              child.set "left", container.left - child.dim.left + getOffset(child) + 'px'
+            else if i == children.length-1
+              child.set "right", child.dim.right - container.right + 'px'
+            else
+              child.set "left", container.left - child.dim.left + getOffset(child)+ getRelativePosition(child) + 'px'
         else
           for child in children
-            child.set "left", container.left - child.dim.left + width + 'px'
-            width += child.dim.width
+            child.set "left", container.left - child.dim.left + getOffset(child) + 'px'
   attached: ->
     @doUpdate()
     if @update

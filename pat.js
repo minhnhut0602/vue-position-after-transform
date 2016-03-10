@@ -12,6 +12,14 @@ module.exports = {
     "update": {
       type: Boolean,
       "default": false
+    },
+    "childwidth": {
+      type: String,
+      "default": "mean"
+    },
+    "origin": {
+      type: String,
+      "default": "center"
     }
   },
   data: function() {
@@ -25,28 +33,36 @@ module.exports = {
   },
   methods: {
     doUpdate: function() {
-      var child, j, k, len, len1, ref, ref1;
-      if (this.valign === "bottom") {
-        ref = this.$children;
-        for (j = 0, len = ref.length; j < len; j++) {
-          child = ref[j];
-          if (child.isPatc) {
+      var child, j, lastChild, len, ref;
+      lastChild = null;
+      ref = this.$children;
+      for (j = 0, len = ref.length; j < len; j++) {
+        child = ref[j];
+        if (child.isPatc) {
+          if (this.valign === "bottom") {
             child.$set("style.bottom", "0");
+            child.$set("style.top", null);
+          } else {
+            child.$set("style.top", "0");
+            child.$set("style.bottom", null);
           }
+          if (this.halign === "right") {
+            child.$set("style.right", "0");
+            child.$set("style.left", null);
+          } else {
+            child.$set("style.left", "0");
+            child.$set("style.right", null);
+          }
+          lastChild = child;
         }
       }
-      if (this.halign === "right") {
-        ref1 = this.$children;
-        for (k = 0, len1 = ref1.length; k < len1; k++) {
-          child = ref1[k];
-          if (child.isPatc) {
-            child.$set("style.right", "0");
-          }
-        }
+      if (this.halign === "justify") {
+        lastChild.$set("style.right", "0");
+        lastChild.$set("style.left", null);
       }
       return this.$nextTick((function(_this) {
         return function() {
-          var childPosition, children, container, i, l, left, len2, len3, len4, len5, len6, len7, len8, len9, m, n, o, p, position, processChild, q, r, ref2, results, results1, results2, results3, s, space, totalWidth, width, widthCorrection;
+          var childPosition, children, container, getOffset, getRelativePosition, getWidth, i, k, l, len1, len2, len3, len4, len5, len6, len7, len8, m, meanWidth, n, o, offset, p, position, processChild, q, r, ref1, results, results1, results2, results3, space, totalWidth;
           if (!_this.$el) {
             return;
           }
@@ -67,71 +83,96 @@ module.exports = {
               });
             }
           };
-          ref2 = _this.$children;
-          for (l = 0, len2 = ref2.length; l < len2; l++) {
-            child = ref2[l];
+          ref1 = _this.$children;
+          for (k = 0, len1 = ref1.length; k < len1; k++) {
+            child = ref1[k];
             processChild(child);
           }
-          if (children.length === 1 && _this.halign === "justify") {
-            _this.halign = "center";
-          }
           if (_this.valign === "top") {
-            for (m = 0, len3 = children.length; m < len3; m++) {
-              child = children[m];
+            for (l = 0, len2 = children.length; l < len2; l++) {
+              child = children[l];
               child.set("top", container.top - child.dim.top + 'px');
             }
           } else if (_this.valign === "center") {
             position = (container.bottom - container.top) / 2 + container.top;
-            for (n = 0, len4 = children.length; n < len4; n++) {
-              child = children[n];
+            for (m = 0, len3 = children.length; m < len3; m++) {
+              child = children[m];
               childPosition = (child.dim.bottom - child.dim.top) / 2 + child.dim.top;
               child.set("top", position - childPosition + 'px');
             }
           } else {
-            for (o = 0, len5 = children.length; o < len5; o++) {
-              child = children[o];
+            for (n = 0, len4 = children.length; n < len4; n++) {
+              child = children[n];
               child.set("bottom", child.dim.bottom - container.bottom + 'px');
             }
           }
-          width = 0;
+          if (children.length === 1 && _this.halign === "justify") {
+            _this.halign = "center";
+          }
+          meanWidth = totalWidth / children.length;
+          offset = 0;
+          space = 0;
+          if (_this.halign === "justify") {
+            space = (container.width - totalWidth) / (children.length - 1);
+          }
+          getOffset = function(child) {
+            var tmp;
+            tmp = offset;
+            offset += getWidth(child);
+            offset += space;
+            return tmp;
+          };
+          getWidth = function(child) {
+            if (_this.childwidth === "mean") {
+              return meanWidth;
+            } else if (_this.childwidth === "actual") {
+              return child.dim.width;
+            } else {
+              return _this.childwidth;
+            }
+          };
+          getRelativePosition = function(child) {
+            if (_this.origin === "left") {
+              return 0;
+            } else if (_this.origin === "right") {
+              return getWidth(child) - child.dim.width;
+            } else {
+              return (getWidth(child) - child.dim.width) / 2;
+            }
+          };
           if (_this.halign === "right") {
             results = [];
-            for (p = 0, len6 = children.length; p < len6; p++) {
-              child = children[p];
-              child.set("right", child.dim.right - container.right + width + 'px');
-              results.push(width += child.dim.width);
+            for (o = 0, len5 = children.length; o < len5; o++) {
+              child = children[o];
+              results.push(child.set("right", child.dim.right - container.right + getOffset(child) + 'px'));
             }
             return results;
           } else if (_this.halign === "center") {
-            position = (container.right - container.left) / 2 + container.left;
+            position = container.left + container.width / 2 - totalWidth / 2;
             results1 = [];
-            for (q = 0, len7 = children.length; q < len7; q++) {
-              child = children[q];
-              childPosition = (child.dim.right - child.dim.left) / 2 + child.dim.left;
-              widthCorrection = (totalWidth - child.dim.width) / 2;
-              child.set("left", position - childPosition + width - widthCorrection + 'px');
-              results1.push(width += child.dim.width);
+            for (i = p = 0, len6 = children.length; p < len6; i = ++p) {
+              child = children[i];
+              results1.push(child.set("left", position - child.dim.left + getOffset(child) + getRelativePosition(child) + 'px'));
             }
             return results1;
           } else if (_this.halign === "justify") {
-            space = (container.width - totalWidth) / (children.length - 1);
             results2 = [];
-            for (i = r = 0, len8 = children.length; r < len8; i = ++r) {
+            for (i = q = 0, len7 = children.length; q < len7; i = ++q) {
               child = children[i];
-              left = container.left - child.dim.left + width;
-              if (i > 0) {
-                left += space;
+              if (i === 0) {
+                results2.push(child.set("left", container.left - child.dim.left + getOffset(child) + 'px'));
+              } else if (i === children.length - 1) {
+                results2.push(child.set("right", child.dim.right - container.right + 'px'));
+              } else {
+                results2.push(child.set("left", container.left - child.dim.left + getOffset(child) + getRelativePosition(child) + 'px'));
               }
-              child.set("left", left + 'px');
-              results2.push(width += child.dim.width);
             }
             return results2;
           } else {
             results3 = [];
-            for (s = 0, len9 = children.length; s < len9; s++) {
-              child = children[s];
-              child.set("left", container.left - child.dim.left + width + 'px');
-              results3.push(width += child.dim.width);
+            for (r = 0, len8 = children.length; r < len8; r++) {
+              child = children[r];
+              results3.push(child.set("left", container.left - child.dim.left + getOffset(child) + 'px'));
             }
             return results3;
           }
