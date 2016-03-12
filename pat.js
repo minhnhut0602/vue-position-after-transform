@@ -1,13 +1,30 @@
+var haligns, origins, pos, valigns;
+
+pos = {
+  top: "top",
+  center: "center",
+  bottom: "bottom",
+  justify: "justify",
+  left: "left",
+  right: "right"
+};
+
+valigns = [pos.top, pos.center, pos.bottom];
+
+haligns = [pos.left, pos.center, pos.justify, pos.right];
+
+origins = [pos.left, pos.center, pos.right];
+
 module.exports = {
   mixins: [require("vue-mixins/onElementResize")],
   props: {
     "valign": {
       type: String,
-      "default": "top"
+      "default": pos.top
     },
     "halign": {
       type: String,
-      "default": "left"
+      "default": pos.left
     },
     "update": {
       type: Boolean,
@@ -19,7 +36,11 @@ module.exports = {
     },
     "origin": {
       type: String,
-      "default": "center"
+      "default": pos.center
+    },
+    "rotatedParent": {
+      type: Boolean,
+      "default": false
     }
   },
   data: function() {
@@ -32,41 +53,54 @@ module.exports = {
     };
   },
   methods: {
-    doUpdate: function() {
+    resetChildren: function() {
       var child, j, lastChild, len, ref;
       lastChild = null;
       ref = this.$children;
       for (j = 0, len = ref.length; j < len; j++) {
         child = ref[j];
         if (child.isPatc) {
-          if (this.valign === "bottom") {
-            child.$set("style.bottom", "0");
-            child.$set("style.top", null);
-          } else {
-            child.$set("style.top", "0");
-            child.$set("style.bottom", null);
-          }
-          if (this.halign === "right") {
-            child.$set("style.right", "0");
-            child.$set("style.left", null);
-          } else {
-            child.$set("style.left", "0");
-            child.$set("style.right", null);
-          }
+          child.resetV(this.valign !== pos.bottom);
+          child.resetH(this.halign !== pos.right);
           lastChild = child;
         }
       }
-      if ((lastChild != null) && this.halign === "justify") {
-        lastChild.$set("style.right", "0");
-        lastChild.$set("style.left", null);
+      if ((lastChild != null) && this.halign === pos.justify) {
+        return child.resetH(false);
+      }
+    },
+    doUpdate: function() {
+      var container, containerElement;
+      this.resetChildren();
+      containerElement = this.$els.con;
+      container = {
+        width: containerElement.offsetWidth,
+        height: containerElement.offsetHeight
+      };
+      if (this.rotatedParent) {
+        this.style.width = container.width + 'px';
+        this.style.height = container.height + 'px';
+        this.style.visibility = "hidden";
+        document.body.appendChild(containerElement);
       }
       return this.$nextTick((function(_this) {
         return function() {
-          var childPosition, children, container, getOffset, getRelativePosition, getWidth, i, k, l, len1, len2, len3, len4, len5, len6, len7, len8, m, meanWidth, n, o, offset, p, position, processChild, q, r, ref1, results, results1, results2, results3, space, totalWidth;
+          var child, children, containerRect, getOffset, getRelativeDim, getRelativePosition, getWidth, i, j, k, l, len, len1, len2, len3, len4, len5, m, meanWidth, n, o, offset, position, processChild, ref, space, totalWidth;
           if (!_this.$el) {
+            document.body.removeChild(containerElement);
             return;
           }
-          container = _this.$els.con.getBoundingClientRect();
+          containerRect = containerElement.getBoundingClientRect();
+          getRelativeDim = function(dim) {
+            return {
+              top: containerRect.top - dim.top,
+              bottom: dim.bottom - containerRect.bottom,
+              left: containerRect.left - dim.left,
+              right: dim.right - containerRect.right,
+              width: dim.width,
+              height: dim.height
+            };
+          };
           children = [];
           totalWidth = 0;
           processChild = function(child) {
@@ -76,38 +110,41 @@ module.exports = {
               totalWidth += dim.width;
               return children.push({
                 vm: child,
-                dim: dim,
+                dim: getRelativeDim(dim),
                 set: function(path, value) {
                   return child.$set("style." + path, value);
                 }
               });
             }
           };
-          ref1 = _this.$children;
-          for (k = 0, len1 = ref1.length; k < len1; k++) {
-            child = ref1[k];
+          ref = _this.$children;
+          for (j = 0, len = ref.length; j < len; j++) {
+            child = ref[j];
             processChild(child);
           }
-          if (_this.valign === "top") {
-            for (l = 0, len2 = children.length; l < len2; l++) {
-              child = children[l];
-              child.set("top", container.top - child.dim.top + 'px');
-            }
-          } else if (_this.valign === "center") {
-            position = (container.bottom - container.top) / 2 + container.top;
-            for (m = 0, len3 = children.length; m < len3; m++) {
-              child = children[m];
-              childPosition = (child.dim.bottom - child.dim.top) / 2 + child.dim.top;
-              child.set("top", position - childPosition + 'px');
+          if (valigns.indexOf(_this.valign) === -1) {
+            _this.valign = pos.top;
+          }
+          if (_this.valign === pos.center) {
+            for (k = 0, len1 = children.length; k < len1; k++) {
+              child = children[k];
+              child.set(pos.top, child.dim.top + (container.height - child.dim.height) / 2 + 'px');
             }
           } else {
-            for (n = 0, len4 = children.length; n < len4; n++) {
-              child = children[n];
-              child.set("bottom", child.dim.bottom - container.bottom + 'px');
+            for (l = 0, len2 = children.length; l < len2; l++) {
+              child = children[l];
+              child.set(_this.valign, child.dim[_this.valign] + 'px');
             }
           }
-          if (children.length === 1 && _this.halign === "justify") {
-            _this.halign = "center";
+          if (haligns.indexOf(_this.halign) === -1) {
+            _this.halign = pos.left;
+          } else {
+            if (children.length === 1 && _this.halign === pos.justify) {
+              _this.halign = pos.center;
+            }
+          }
+          if (origins.indexOf(_this.origin) === -1) {
+            _this.origin === pos.center;
           }
           if (totalWidth > container.width) {
             totalWidth = container.width;
@@ -115,7 +152,7 @@ module.exports = {
           meanWidth = totalWidth / children.length;
           offset = 0;
           space = 0;
-          if (_this.halign === "justify") {
+          if (_this.halign === pos.justify) {
             space = (container.width - totalWidth) / (children.length - 1);
           }
           getOffset = function(child) {
@@ -138,68 +175,57 @@ module.exports = {
             if (origin == null) {
               origin = _this.origin;
             }
-            if (origin === "left") {
+            if (origin === pos.left) {
               return 0;
-            } else if (origin === "right") {
+            } else if (origin === pos.right) {
               return getWidth(child) - child.dim.width;
             } else {
               return (getWidth(child) - child.dim.width) / 2;
             }
           };
-          if (_this.halign === "right") {
-            results = [];
-            for (o = 0, len5 = children.length; o < len5; o++) {
-              child = children[o];
-              results.push(child.set("right", child.dim.right - container.right + getOffset(child) + 'px'));
+          if (_this.halign === pos.center) {
+            position = container.width / 2 - totalWidth / 2;
+            if (_this.origin !== pos.center) {
+              position += getRelativePosition(children[children.length - 1], pos.center);
             }
-            return results;
-          } else if (_this.halign === "center") {
-            position = container.left + container.width / 2 - totalWidth / 2;
-            if (_this.origin !== "center") {
-              position += getRelativePosition(children[children.length - 1], "center");
-            }
-            results1 = [];
-            for (i = p = 0, len6 = children.length; p < len6; i = ++p) {
+            for (i = m = 0, len3 = children.length; m < len3; i = ++m) {
               child = children[i];
-              if (i === 0 && _this.origin !== "center") {
-                child.set("left", position - child.dim.left + getOffset(child) + 'px');
-                if (_this.origin === "right") {
-                  results1.push(offset -= getRelativePosition(child, "right"));
-                } else {
-                  results1.push(void 0);
+              if (i === 0 && _this.origin !== pos.center) {
+                child.set(pos.left, position + child.dim.left + getOffset(child) + 'px');
+                if (_this.origin === pos.right) {
+                  offset -= getRelativePosition(child, pos.right);
                 }
               } else {
-                results1.push(child.set("left", position - child.dim.left + getOffset(child) + getRelativePosition(child) + 'px'));
+                child.set(pos.left, position + child.dim.left + getOffset(child) + getRelativePosition(child) + 'px');
               }
             }
-            return results1;
-          } else if (_this.halign === "justify") {
-            results2 = [];
-            for (i = q = 0, len7 = children.length; q < len7; i = ++q) {
+          } else if (_this.halign === pos.justify) {
+            for (i = n = 0, len4 = children.length; n < len4; i = ++n) {
               child = children[i];
               if (i === 0) {
-                child.set("left", container.left - child.dim.left + getOffset(child) + 'px');
-                if (_this.origin === "right") {
-                  results2.push(offset -= getRelativePosition(child, "center"));
-                } else if (_this.origin === "left" || _this.origin === "center") {
-                  results2.push(offset += getRelativePosition(children[children.length - 1], "center"));
-                } else {
-                  results2.push(void 0);
+                child.set(pos.left, container.left + child.dim.left + getOffset(child) + 'px');
+                if (_this.origin === pos.right) {
+                  offset -= getRelativePosition(child, pos.center);
+                } else if (_this.origin === pos.left || _this.origin === pos.center) {
+                  offset += getRelativePosition(children[children.length - 1], pos.center);
                 }
               } else if (i === children.length - 1) {
-                results2.push(child.set("right", child.dim.right - container.right + 'px'));
+                child.set(pos.right, child.dim.right + 'px');
               } else {
-                results2.push(child.set("left", container.left - child.dim.left + getOffset(child) + getRelativePosition(child) + 'px'));
+                child.set(pos.left, child.dim.left + getOffset(child) + getRelativePosition(child) + 'px');
               }
             }
-            return results2;
           } else {
-            results3 = [];
-            for (r = 0, len8 = children.length; r < len8; r++) {
-              child = children[r];
-              results3.push(child.set("left", container.left - child.dim.left + getOffset(child) + 'px'));
+            for (o = 0, len5 = children.length; o < len5; o++) {
+              child = children[o];
+              child.set(_this.halign, child.dim[_this.halign] + getOffset(child) + 'px');
             }
-            return results3;
+          }
+          if (_this.rotatedParent) {
+            _this.$el.appendChild(containerElement);
+            _this.style.width = "100%";
+            _this.style.height = "100%";
+            return _this.style.visibility = null;
           }
         };
       })(this));
@@ -217,4 +243,4 @@ module.exports = {
 };
 
 if (module.exports.__esModule) module.exports = module.exports.default
-;(typeof module.exports === "function"? module.exports.options: module.exports).template = "<div class=vc-pat><div v-bind:style=style v-el:con=v-el:con class=vc-pat-container><slot></slot></div></div>"
+;(typeof module.exports === "function"? module.exports.options: module.exports).template = "<div class=vc-pat><div :style=style v-el:con=v-el:con class=vc-pat-container><slot></slot></div></div>"

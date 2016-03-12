@@ -1,11 +1,16 @@
 // out: ..
 <template lang="jade">
 .vc-pat
-  .vc-pat-container(v-bind:style="style" v-el:con)
+  .vc-pat-container(:style="style" v-el:con)
     slot
 </template>
 
 <script lang="coffee">
+pos = top:"top",center:"center",bottom:"bottom",justify:"justify",left:"left",right:"right"
+valigns = [pos.top,pos.center,pos.bottom]
+haligns = [pos.left,pos.center,pos.justify,pos.right]
+origins = [pos.left,pos.center,pos.right]
+
 module.exports =
 
   mixins:[
@@ -15,10 +20,10 @@ module.exports =
   props:
     "valign":
       type: String
-      default: "top"
+      default: pos.top
     "halign":
       type: String
-      default: "left"
+      default: pos.left
     "update":
       type: Boolean
       default: false
@@ -27,7 +32,10 @@ module.exports =
       default: "mean"
     "origin":
       type: String
-      default: "center"
+      default: pos.center
+    "rotatedParent":
+      type: Boolean
+      default: false
 
   data: ->
     style:
@@ -36,29 +44,36 @@ module.exports =
       height: "100%"
 
   methods:
-    doUpdate: ->
+    resetChildren: ->
       lastChild = null
       for child in @$children
         if child.isPatc
-          if @valign == "bottom"
-            child.$set("style.bottom","0")
-            child.$set("style.top",null)
-          else
-            child.$set("style.top","0")
-            child.$set("style.bottom",null)
-          if @halign == "right"
-            child.$set("style.right","0")
-            child.$set("style.left",null)
-          else
-            child.$set("style.left","0")
-            child.$set("style.right",null)
+          child.resetV(@valign != pos.bottom)
+          child.resetH(@halign != pos.right)
           lastChild = child
-      if lastChild? and @halign == "justify"
-        lastChild.$set("style.right","0")
-        lastChild.$set("style.left",null)
+      if lastChild? and @halign == pos.justify
+        child.resetH(false)
+    doUpdate: ->
+      @resetChildren()
+      containerElement = @$els.con
+      container = {width: containerElement.offsetWidth, height: containerElement.offsetHeight}
+      if @rotatedParent
+        @style.width = container.width+'px'
+        @style.height = container.height+'px'
+        @style.visibility = "hidden"
+        document.body.appendChild containerElement
       @$nextTick =>
-        return unless @$el
-        container = @$els.con.getBoundingClientRect()
+        unless @$el
+          document.body.removeChild containerElement
+          return
+        containerRect = containerElement.getBoundingClientRect()
+        getRelativeDim = (dim) ->
+          top: containerRect.top - dim.top
+          bottom: dim.bottom - containerRect.bottom
+          left: containerRect.left - dim.left
+          right: dim.right - containerRect.right
+          width: dim.width
+          height: dim.height
         children = []
         totalWidth = 0
         processChild = (child) ->
@@ -67,34 +82,36 @@ module.exports =
             totalWidth += dim.width
             children.push
               vm: child
-              dim: dim
+              dim: getRelativeDim(dim)
               set: (path, value) ->
                 child.$set("style.#{path}", value)
         for child in @$children
           processChild(child)
-        ## vertical align
 
-        if @valign == "top"
+        ## vertical align
+        @valign = pos.top if valigns.indexOf(@valign) == -1
+        if @valign == pos.center
           for child in children
-            child.set "top", container.top - child.dim.top+ 'px'
-        else if @valign == "center"
-          position = (container.bottom - container.top) / 2 + container.top
-          for child in children
-            childPosition = (child.dim.bottom - child.dim.top) / 2 + child.dim.top
-            child.set "top", position - childPosition+ 'px'
+            child.set pos.top,  child.dim.top + (container.height - child.dim.height) / 2 + 'px'
         else
           for child in children
-            child.set "bottom", child.dim.bottom - container.bottom + 'px'
+            child.set @valign, child.dim[@valign] + 'px'
+
 
         ## horizontal align
-        if children.length == 1 && @halign == "justify"
-          @halign = "center"
+        if haligns.indexOf(@halign) == -1
+          @halign = pos.left
+        else
+          if children.length == 1 && @halign == pos.justify
+            @halign = pos.center
+        if origins.indexOf(@origin) == -1
+          @origin == pos.center
         if totalWidth > container.width
           totalWidth = container.width
         meanWidth = totalWidth / children.length
         offset = 0
         space = 0
-        if @halign == "justify"
+        if @halign == pos.justify
           space = (container.width - totalWidth) / (children.length - 1)
         getOffset = (child) =>
           tmp = offset
@@ -109,41 +126,43 @@ module.exports =
           else
             return parseInt(@childwidth)
         getRelativePosition = (child, origin=@origin) =>
-          if origin == "left"
+          if origin == pos.left
             return 0
-          else if origin == "right"
+          else if origin == pos.right
             return getWidth(child) - child.dim.width
           else
             return (getWidth(child) - child.dim.width)/2
-        if @halign == "right"
-          for child in children
-            child.set "right", child.dim.right - container.right + getOffset(child) + 'px'
-        else if @halign == "center"
-          position = container.left + container.width / 2 - totalWidth / 2
-          if @origin != "center"
-            position += getRelativePosition(children[children.length-1], "center")
+        if @halign == pos.center
+          position = container.width / 2 - totalWidth / 2
+          if @origin != pos.center
+            position += getRelativePosition(children[children.length-1], pos.center)
           for child,i in children
-            if i == 0 and @origin != "center"
-              child.set "left", position - child.dim.left + getOffset(child) + 'px'
-              if @origin == "right"
-                offset -= getRelativePosition(child, "right")
+            if i == 0 and @origin != pos.center
+              child.set pos.left, position + child.dim.left + getOffset(child) + 'px'
+              if @origin == pos.right
+                offset -= getRelativePosition(child, pos.right)
             else
-              child.set "left", position - child.dim.left + getOffset(child) + getRelativePosition(child) + 'px'
-        else if @halign == "justify"
+              child.set pos.left, position + child.dim.left + getOffset(child) + getRelativePosition(child) + 'px'
+        else if @halign == pos.justify
           for child,i in children
             if i == 0
-              child.set "left", container.left - child.dim.left + getOffset(child) + 'px'
-              if @origin == "right"
-                offset -= getRelativePosition(child, "center")
-              else if @origin == "left" or @origin == "center"
-                offset += getRelativePosition(children[children.length-1], "center")
+              child.set pos.left, container.left + child.dim.left + getOffset(child) + 'px'
+              if @origin == pos.right
+                offset -= getRelativePosition(child, pos.center)
+              else if @origin == pos.left or @origin == pos.center
+                offset += getRelativePosition(children[children.length-1], pos.center)
             else if i == children.length-1
-              child.set "right", child.dim.right - container.right + 'px'
+              child.set pos.right, child.dim.right + 'px'
             else
-              child.set "left", container.left - child.dim.left + getOffset(child)+ getRelativePosition(child) + 'px'
+              child.set pos.left, child.dim.left + getOffset(child)+ getRelativePosition(child) + 'px'
         else
           for child in children
-            child.set "left", container.left - child.dim.left + getOffset(child) + 'px'
+            child.set @halign, child.dim[@halign] + getOffset(child) + 'px'
+        if @rotatedParent
+          @$el.appendChild containerElement
+          @style.width = "100%"
+          @style.height = "100%"
+          @style.visibility = null
   attached: ->
     @doUpdate()
     if @update

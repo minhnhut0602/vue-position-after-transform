@@ -32,6 +32,7 @@ vc-pat
 ```
 see `dev/` folder for examples
 
+
 #### Props
 | Name | type | default | description |
 | ---:| --- | ---| --- |
@@ -40,6 +41,7 @@ see `dev/` folder for examples
 | halign | String | "left" | available: "left", "center","justify", "right" |
 | childwidth | String | "mean" | available: "mean", "actual" or an absolute number; width which is taken to position the children. |
 | origin | String | "center" | available: "left", "center", "right"; used in halign: "center" and "justify" to position child relative to given childwidth |
+| rotatedParent | Boolean | false | set `true` when the component is rotated somehow. This will append the content to `body` during calculation, consequently all nested styling will be ignored |
 
 # Development
 Clone repository
