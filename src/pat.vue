@@ -37,7 +37,7 @@ module.exports =
       type: Boolean
       default: false
     "containerClass":
-      default: []
+      default: ""
 
   data: ->
     style:

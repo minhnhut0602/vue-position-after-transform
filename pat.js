@@ -43,7 +43,7 @@ module.exports = {
       "default": false
     },
     "containerClass": {
-      "default": []
+      "default": ""
     }
   },
   data: function() {
