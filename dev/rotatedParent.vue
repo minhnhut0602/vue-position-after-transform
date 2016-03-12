@@ -5,8 +5,14 @@ doctype html
   p width: 100px; height: 50px; padding: 10px
   pat.rotateParent(rotated-parent style="width: 100px;height: 50px; padding: 10px")
     patc.rotate Test
-  p width: 100px; height: 50px; padding: 10px, halign="center"
-  pat.rotateParent(rotated-parent halign="center" style="width: 100px;height: 50px; padding: 10px")
+  p width: 100px; height: 50px; padding: 10px, halign="center",origin="left"
+  pat.rotateParent(rotated-parent origin="left" halign="center" style="width: 100px;height: 50px; padding: 10px")
+    patc.rotate Test
+    patc.rotate TestTest
+  p width: 200px; height: 100px; padding: 10px, halign="center", valign="center"
+  pat(rotated-parent halign="center" valign="center" style="width: 200px;height: 100px; padding: 10px")
+    patc.rotate Testlonglong
+    patc.rotate Test
     patc.rotate Test
 </template>
 
