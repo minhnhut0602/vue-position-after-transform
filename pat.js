@@ -87,7 +87,9 @@ module.exports = {
         return function() {
           var child, children, containerRect, getOffset, getRelativeDim, getRelativePosition, getWidth, i, j, k, l, len, len1, len2, len3, len4, len5, m, meanWidth, n, o, offset, position, processChild, ref, space, totalWidth;
           if (!_this.$el) {
-            document.body.removeChild(containerElement);
+            if (_this.rotatedParent) {
+              document.body.removeChild(containerElement);
+            }
             return;
           }
           containerRect = containerElement.getBoundingClientRect();

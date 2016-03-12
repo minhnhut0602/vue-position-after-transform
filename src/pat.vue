@@ -64,7 +64,7 @@ module.exports =
         document.body.appendChild containerElement
       @$nextTick =>
         unless @$el
-          document.body.removeChild containerElement
+          document.body.removeChild containerElement if @rotatedParent
           return
         containerRect = containerElement.getBoundingClientRect()
         getRelativeDim = (dim) ->
