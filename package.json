@@ -1,7 +1,7 @@
 {
   "name": "vue-position-after-transform",
   "description": "reposition elements after css-transform",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "homepage": "https://github.com/vue-comps",
   "author": {
     "name": "Paul Pflugradt",
