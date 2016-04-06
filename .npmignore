@@ -4,6 +4,3 @@ node_modules
 npm-debug.log
 dev/index.js
 static
-build/bundle.js
-pat.js
-patc.js
